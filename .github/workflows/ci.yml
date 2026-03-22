@@ -68,7 +68,7 @@ jobs:
         run: docker save task4-app -o task4-app.tar
       
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: task4-app-image
           path: task4-app.tar
