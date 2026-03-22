@@ -1,0 +1,77 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        ENVIRONMENT: ${ENVIRONMENT:-dev}
+    container_name: task4-app
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+      - app-storage:/var/www/html/storage
+    environment:
+      - APP_ENV=${APP_ENV:-local}
+      - API_KEY=${API_KEY:-123}
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-task4}
+      - DB_USERNAME=${DB_USERNAME:-task4}
+      - DB_PASSWORD=${DB_PASSWORD:-task4}
+    networks:
+      - task4-network
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(0);"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      db:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    container_name: task4-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./:/var/www/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - task4-network
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  db:
+    image: mysql:8.0
+    container_name: task4-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-task4}
+      MYSQL_USER: ${DB_USERNAME:-task4}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-task4}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - task4-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_ROOT_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  task4-network:
+    driver: bridge
+
+volumes:
+  app-storage:
+  db-data:

@@ -1,0 +1,15 @@
+{
+    "name": "java2/task5",
+    "autoload": {
+        "psr-4": {
+            "Task5\\": "server/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Nick Felker",
+            "email": "felker.nick@bk.ru"
+        }
+    ],
+    "require": {}
+}

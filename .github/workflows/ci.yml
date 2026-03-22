@@ -1,0 +1,51 @@
+name: Task pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  lint:
+    runs-on:
+      ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Lint PHP
+        run: | 
+          php -l index.php
+          find server -name "*.php" -exec php -l {}\;
+  tests:
+    runs-on:
+      ubuntu-latest
+    needs:
+      lint
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: task4
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options:
+          --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - uses: actions/checkout@v3
+      - name: Migrations
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot task4 < migrate.sql
+  build:
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build docker image
+        run: docker build -t task4-app .
+      - name: saving image
+        run:
+          docker save task4-app -o task4-app.tar
+      - uses:
+        with:
+          name: task4-app-image
+          path: task4-app.tar
