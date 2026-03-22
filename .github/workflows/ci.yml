@@ -15,7 +15,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'    # или '8.5.4'
+          php-version: '8.5'
           tools: composer
       
       - name: Lint PHP
