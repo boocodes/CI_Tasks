@@ -11,6 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'    # или '8.5.4'
+          tools: composer
+      
       - name: Lint PHP
         run: |
           php -l index.php
@@ -30,6 +37,15 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
       - uses: actions/checkout@v3
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+      
+      - name: Install MySQL client
+        run: sudo apt-get update && sudo apt-get install -y mysql-client
+      
       - name: Migrations
         run: |
           mysql -h 127.0.0.1 -uroot -proot task4 < migrate.sql
@@ -39,10 +55,18 @@ jobs:
     needs: tests
     steps:
       - uses: actions/checkout@v3
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+      
       - name: Build docker image
         run: docker build -t task4-app .
+      
       - name: Save image
         run: docker save task4-app -o task4-app.tar
+      
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
