@@ -29,7 +29,7 @@ class IdempotencyCreateTest extends TestCase
         $result2 = $this->task->add($newTaskData);
         $newTaskDataArray = $this->task->getAll(null, null);
         $newTaskDataSize = $initialTaskDataSize + 1;
-        $this->assertEquals($newTaskDataSize, count($newTaskDataArray);
+        $this->assertEquals($newTaskDataSize, count($newTaskDataArray));
         $this->assertEquals($result1, $result2);
     }
 }
