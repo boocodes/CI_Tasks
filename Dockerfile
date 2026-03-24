@@ -1,3 +1,5 @@
+ARG ENVIRONMENT=dev
+
 FROM php:8.5.4-fpm AS dev
 
 RUN docker-php-ext-install pdo pdo_mysql
