@@ -13,6 +13,22 @@ class IdempotencyCreateTest extends TestCase
         parent::setUp();
         $this->task = new Task();
     }
+    public function tearDown(): void
+    {
+        $this->clearData();
+        parent::tearDown();
+    }
+    private function clearData(): void
+    {
+        $tasksFile = __DIR__ . '/../../tasks.json';
+        if (file_exists($tasksFile)) {
+            file_put_contents($tasksFile, json_encode([]));
+        }
+        $idempotencyFile = __DIR__ . '/../../idempotency.json';
+        if (file_exists($idempotencyFile)) {
+            file_put_contents($idempotencyFile, json_encode([]));
+        }
+    }
 
     public function testMain(): void
     {
