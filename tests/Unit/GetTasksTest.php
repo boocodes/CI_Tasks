@@ -13,7 +13,7 @@ class GetTasksTest extends TestCase
         parent::setUp();
         $this->task = new Task();
     }
-    public function mainTest(): void
+    public function testMain(): void
     {
         $result = $this->task->getAll(null, null);
         $this->assertIsArray($result);
