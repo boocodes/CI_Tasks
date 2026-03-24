@@ -12,3 +12,9 @@ test:
 	docker exec task4-app php -l /var/www/html/index.php
 lint:
 	docker exec task4-app find /var/www/html -name "*.php" -exec php -l {}\;
+build-dev:
+	docker compose build --build-arg ENVIRONMENT=dev
+build-prod:
+	docker compose build --build-arg ENVIRONMENT=prod
+shell:
+	docker exec -it task4-app /bin/bash
