@@ -14,7 +14,7 @@ class IdempotencyCreateTest extends TestCase
         $this->task = new Task();
     }
 
-    public function mainTest(): void
+    public function testMain(): void
     {
         $currentTaskData = $this->task->getAll(null, null);
         $initialTaskDataSize = count($currentTaskData);
