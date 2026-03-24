@@ -41,13 +41,39 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
+
+      - name: Install dependencies
+        run: composer install --no-progress -no-suggest --prefer-dist
       
       - name: Install MySQL client
         run: sudo apt-get update && sudo apt-get install -y mysql-client
-      
+        
+      - name: Wait for MySQL ready
+        run: |
+          until mysqladmin ping -h 127.0.0.1 -uroot -proot --silent; do 
+            echo "Waiting for MySQL" 
+            sleep 5
+          done
       - name: Migrations
         run: |
           mysql -h 127.0.0.1 -uroot -proot task4 < migrate.sql
+      - name: Copy environment
+        run: |
+          if [ -f .env example ]; then
+            cp .env.example .env
+          elif [ -f .env.testing ]; then
+            cp .env.testing .env
+          fi
+      - name: Generate app key
+        run: |
+          if [ -f artisan ]; then
+            php artisan key:generate
+          fi
+      - name: Run PHPUnit
+        run: |
+          if [ -f phpunit.xml ] || [ -f phpunit.xml.dist ]; then
+            ./vendor/bin/phpunit --testbox --colors=always
+          fi
 
   build:
     runs-on: ubuntu-latest
