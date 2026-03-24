@@ -167,71 +167,90 @@ abstract class Model
         return [];
     }
 
-    public function add(array $data): array
-    {
-        $tableName = get_class_vars(get_class($this))['tableName'] ?? null;
-        if ($tableName === NULL) {
-            //var_dump("Table name not defined");
-            return [];
+public function add(array $data): array
+{
+    $tableName = get_class_vars(get_class($this))['tableName'] ?? null;
+    if ($tableName === NULL) {
+        return [];
+    }
+    if (!$this->checkRequiredData($data)) {
+        return [];
+    }
+
+    $previousData = json_decode(file_get_contents(__DIR__ . '/../../' . $tableName . '.json'), true);
+    if (!is_array($previousData)) {
+        $previousData = [];
+    }
+
+    $result = $this->validateInputDataByInstance($data);
+
+    $currentIdempotencyKey = $_SERVER['HTTP_IDEMPOTENCY_KEY'] ?? null;
+
+    $instanceFields = get_class_vars(get_class($this));
+
+    if (array_key_exists('createdAt', $instanceFields)) {
+        $result['createdAt'] = new \DateTimeImmutable()->format('c');
+    }
+
+    $newResultId = uniqid();
+    $idempotencyFile = __DIR__ . '/../../idempotency.json';
+    $idempotencyKeysList = [];
+    
+    if (file_exists($idempotencyFile)) {
+        $content = file_get_contents($idempotencyFile);
+        if ($content !== false && !empty($content)) {
+            $decoded = json_decode($content, true);
+            if (is_array($decoded)) {
+                $idempotencyKeysList = $decoded;
+            }
         }
-        if (!$this->checkRequiredData($data)) {
-            return [];
-        }
+    }
 
-        $previousData = json_decode(file_get_contents(__DIR__ . '/../../' . $tableName . '.json'), true);
-
-        $result = $this->validateInputDataByInstance($data);
-
-
-        $currentIdempotencyKey = $_SERVER['HTTP_IDEMPOTENCY_KEY'] ?? null;
-
-        $instanceFields = get_class_vars(get_class($this));
-
-        if (array_key_exists('createdAt', $instanceFields)) {
-            $result['createdAt'] = new \DateTimeImmutable()->format('c');
-        }
-
-        $newResultId = uniqid();
-
-        $idempotencyKeysList = json_decode(file_get_contents(__DIR__ . '/../../idempotency.json') ?? [], true);
-
-        if ($currentIdempotencyKey !== null) {
-            $newIdempotencyKeyData = [
-                'id' => $newResultId,
-                'idempotency_key' => $currentIdempotencyKey,
-            ];
-            if (!empty($idempotencyKeysList)) {
-                foreach ($idempotencyKeysList as $idempotencyKey => $idempotencyValue) {
-                    if ($idempotencyValue['idempotency_key'] === $currentIdempotencyKey) {
-                        $searchingEntity = $this->getById($idempotencyValue['id']);
-                        $compareResult = array_intersect_key($searchingEntity, $result);
-                        if ($this->normalizeArrayForComparison($compareResult) ==
-                            $this->normalizeArrayForComparison($result)
-                        ) {
-                            return $searchingEntity;
-                        } else if (empty($searchingEntity)) {
-                            unset($idempotencyKeysList[$idempotencyKey]);
-                            break;
-                        } else {
-                            header('Content-Type: application/json');
-                            http_response_code(409);
-                            exit(0);
-                        }
+    if ($currentIdempotencyKey !== null) {
+        $newIdempotencyKeyData = [
+            'id' => $newResultId,
+            'idempotency_key' => $currentIdempotencyKey,
+        ];
+        
+        if (!empty($idempotencyKeysList)) {
+            foreach ($idempotencyKeysList as $index => $idempotencyValue) {
+                if (isset($idempotencyValue['idempotency_key']) && 
+                    $idempotencyValue['idempotency_key'] === $currentIdempotencyKey) {
+                    
+                    $searchingEntity = $this->getById($idempotencyValue['id']);
+                    
+                    if (empty($searchingEntity)) {
+                        unset($idempotencyKeysList[$index]);
+                        break;
+                    }
+                    
+                    $compareResult = array_intersect_key($searchingEntity, $result);
+                    if ($this->normalizeArrayForComparison($compareResult) ==
+                        $this->normalizeArrayForComparison($result)
+                    ) {
+                        return $searchingEntity;
+                    } else {
+                        header('Content-Type: application/json');
+                        http_response_code(409);
+                        exit(0);
                     }
                 }
             }
-            // not found
-            $idempotencyKeysList[] = $newIdempotencyKeyData;
-            file_put_contents(__DIR__ . '/../../idempotency.json', json_encode($idempotencyKeysList));
+            $idempotencyKeysList = array_values($idempotencyKeysList);
         }
-
-        if (array_key_exists('id', $instanceFields)) {
-            $result['id'] = $newResultId;
-        }
-        $previousData[] = $result;
-        file_put_contents(__DIR__ . '/../../' . $tableName . '.json', json_encode($previousData, JSON_PRETTY_PRINT));
-        return $result;
+        $idempotencyKeysList[] = $newIdempotencyKeyData;
+        file_put_contents($idempotencyFile, json_encode($idempotencyKeysList, JSON_PRETTY_PRINT));
     }
+
+    if (array_key_exists('id', $instanceFields)) {
+        $result['id'] = $newResultId;
+    }
+    
+    $previousData[] = $result;
+    file_put_contents(__DIR__ . '/../../' . $tableName . '.json', json_encode($previousData, JSON_PRETTY_PRINT));
+    
+    return $result;
+}
 
     public function editById(string $id, array $data): array
     {
