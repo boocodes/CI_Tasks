@@ -23,6 +23,6 @@ class AddTaskTest extends TestCase
             'status' => TaskStatus::NEW->value,
         ];
         $result = $this->task->add($newTaskData);
-        $this->assertTrue($result);
+        $this->assertEquals($newTaskData['title'], $result['title']);
     }
 }
