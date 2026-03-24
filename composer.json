@@ -11,5 +11,7 @@
             "email": "felker.nick@bk.ru"
         }
     ],
-    "require": {}
+    "require-dev": {
+        "phpunit/phpunit": "^13.0"
+    }
 }
