@@ -14,7 +14,7 @@ class AddTaskTest extends TestCase
         $this->task = new Task();
     }
 
-    public function mainTest(): void
+    public function testMain(): void
     {
         $newTaskData = 
         [
