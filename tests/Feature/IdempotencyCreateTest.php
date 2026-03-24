@@ -24,6 +24,8 @@ class IdempotencyCreateTest extends TestCase
             'status' => TaskStatus::NEW->value,
         ];
         $_SERVER['Idempotency-key'] = "12345";
+        $_SERVER['HTTP_IDEMPOTENCY_KEY'] = "12345";
+        $_SERVER['IDEMPOTENCY_KEY'] = "12345";
         $result1 = $this->task->add($newTaskData);
         $result2 = $this->task->add($newTaskData);
         $this->assertEquals($result1, $result2);
