@@ -72,7 +72,7 @@ jobs:
       - name: Run PHPUnit
         run: |
           if [ -f phpunit.xml ] || [ -f phpunit.xml.dist ]; then
-            ./vendor/bin/phpunit --testbox --colors=always
+            ./vendor/bin/phpunit --colors=always
           fi
 
   build:
